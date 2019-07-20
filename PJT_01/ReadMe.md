@@ -44,7 +44,6 @@ API요청 코드
 
 ## 3. code 상세정보
 
-
 ```python
 import requests
 from datetime import datetime, timedelta
@@ -105,7 +104,7 @@ with open('boxoffice.csv', 'w', newline='', encoding='utf-8') as f:
 
 
 
-####  날짜변수 지정
+#### 날짜변수 지정
 
 ```python
 import requests
@@ -132,6 +131,7 @@ print(data)
 - 목표는 2019년 7월 13일부터 최근 50주 간의 영화 상세정보를 받아와 boxoffice.csv파일을 생성하고movieCd, movieNm, audiAcc의 데이터만 받아오는 것 입니다.
 - 매 주마다의 정보가 필요하므로 datetime모듈의 timedelta메소드를 사용했습니다.
 - 부여받은 API는 환경변수 (.env)에 API_KEY라는 이름으로 변수를 지정하였고 decouple모듈의 config메소드를 사용하여 개인정보를 보호하였습니다.
+- .env 에 저장된 API_KEY값을 github에 올리지 않기 위해 .gitignore 파일을 생성하여 그 안에 .env를 지정합니다.
 - requests 메소드를 사용하여 받아온 데이터는 다음과 같은 형식입니다.
 
 #### 받아온 데이터의 형태
@@ -290,4 +290,3 @@ with open('boxoffice.csv', 'w', newline='', encoding='utf-8') as f:
         writer.writerow(code) # 어벤져스라는 딕셔너리 안에 
 
 ```
-
