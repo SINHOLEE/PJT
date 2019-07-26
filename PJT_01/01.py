@@ -6,7 +6,7 @@ from decouple import config
 
 # 날짜변수 지정
 cover = {}
-for i in range(2):
+for i in range(50):
 
     targetDt = datetime(2019, 7, 13) - timedelta(weeks = i ) # 여기서부터 2주를 빼겟다.
     targetDt = targetDt.strftime('%Y%m%d') # strftime : str특정 포멧으로 바꾸게 해준다.
