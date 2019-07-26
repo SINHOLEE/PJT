@@ -2,11 +2,35 @@
 
 ## 1. 목표
 
-- 기초 Python에 대한 이해
-- Python을 통한 데이터 수집 및 파일 저장
-- Python 조건/반복문 및 다양한 자료구조 조작
-- API 활용을 통해 데이터를 수집하고 내가 원하는 형태로 가공한다.
-- 영화평점사이트(예- watcha)에 필요한 데이터를 프로그래밍을 통해 수집한다.
+- **01.py : 최근 50주간 데이터 중에 주간 박스오피스 TOP10데이터를 수집합니다.**
+
+  - 세부 조건
+
+  1. 주간(월~일)까지 기간의 데이터를 조회합니다.
+  2. 조회 기간은 총 50주이며, 기준일(마지막 일자)은 2019년 7월 13일입니다.
+  3. 다양성 영화/상업 영화를 모두 포함하여야 합니다.
+  4. 한국/외국 영화를 모두 포함하여야 합니다.
+  5. 모든 상영지역을 포함하여야 합니다.
+
+  - 결과
+    수집된 데이터에서 영화 대표코드 , 영화명 , 해당일 누적관객수 를 기록합니다.
+
+- **02.py : 위에서 수집한 영화 대표코드를 활용하여 상세 정보를 수집합니다.**
+
+  - 결과
+    영화별로 영화 대표코드 , 영화명(국문) , 영화명(영문) , 영화명(원문) , 관람등급 , 개봉연도 , 상영시간 , 장
+    르 , 감독명의 내용을 저장합니다.
+
+    
+
+- **03.py : 위에서 수집한 영화 감독정보를 활용하여 상세 정보를 수집합니다.**
+
+  - 세부 조건
+    영화인명 으로 조회합니다.
+
+  - 결과
+
+    영화인 코드 , 영화인명 , 분야 , 필모리스트의 내용을 저장합니다.
 
 ## 2. 사용한 API 정보
 
@@ -42,7 +66,9 @@ API요청 코드
 
 
 
-## 3. code 상세정보
+## 3. code 정보
+
+**01.py 전체코드**
 
 
 ```python
@@ -103,7 +129,151 @@ with open('boxoffice.csv', 'w', newline='', encoding='utf-8') as f:
 
 ```
 
+**02.py 전체코드**
 
+```python
+import requests
+from pprint import pprint
+from datetime import datetime, timedelta
+from decouple import config
+import csv
+
+with open('boxoffice.csv', 'r', newline='', encoding='utf-8') as f:
+    reader = csv.DictReader(f)
+
+    movieCds = []
+    for row in reader:
+      movieCds.append(row['movieCd'])
+
+base_url ='http://www.kobis.or.kr/kobisopenapi/webservice/rest/movie/searchMovieInfo.json'
+key = config('API_KEY')
+movies_info = []
+
+
+for movieCd in movieCds:
+
+    api_url = f'{base_url}?key={key}&movieCd={movieCd}'
+    response = requests.get(api_url)
+    data = response.json()
+    
+    if data['movieInfoResult']['movieInfo']['audits'] == []:
+        pass
+    else:
+        watchGradeNm = data['movieInfoResult']['movieInfo']['audits'][0]['watchGradeNm']
+    
+    if data['movieInfoResult']['movieInfo']['genres'] == []:
+        pass
+    else:
+        genreNm = data['movieInfoResult']['movieInfo']['genres'][0]['genreNm']
+    
+    if data['movieInfoResult']['movieInfo']['directors'] == []:
+        pass
+    else:
+       directors = data['movieInfoResult']['movieInfo']['directors'][0]['peopleNm']
+    
+    temp = {
+            'movieCd' : movieCd,
+            'movieNm' : data['movieInfoResult']['movieInfo']['movieNm'],
+            'movieNmEn' : data['movieInfoResult']['movieInfo']['movieNmEn'],
+            'movieNmOg' : data['movieInfoResult']['movieInfo']['movieNmOg'],
+            'watchGradeNm' : watchGradeNm,
+            'openDt': data['movieInfoResult']['movieInfo']['openDt'],
+            'showTm' : data['movieInfoResult']['movieInfo']['showTm'],
+            'genreNm' : genreNm,
+            'directors' : directors,
+            }
+
+    movies_info.append(temp)
+    temp = {}
+
+# movies_info 는 top_10 이랑 같은 규모
+# print(movies_info)
+
+with open('movie2.csv', 'w', newline='', encoding='utf-8') as f:
+    # 저장할 필드의 이름을 미리 저장한다.
+    fieldnames = ('movieCd','movieNm','movieNmEn','movieNmOg' ,'watchGradeNm' ,'openDt' ,'showTm' ,'genreNm' ,'directors', ) # 항목별 이름
+    writer = csv.DictWriter(f, fieldnames=fieldnames)
+
+    # 필드 이름을 csv 파일 최상단에 작성한다.
+    writer.writeheader() # 헤더를 생성한다.
+
+    # Dictionary를 순회하며 key값에 맞는 value를 한줄씩 작성한다.
+    for movie_info in movies_info:
+        writer.writerow(movie_info) # 어벤져스라는 딕셔너리 안에 
+```
+
+**03.py 전체코드**
+
+~~~python
+import requests
+from pprint import pprint
+from datetime import datetime, timedelta
+from decouple import config
+import csv
+
+with open('movie.csv', 'r', newline='', encoding='utf-8') as f:
+    reader = csv.DictReader(f)
+
+    directors_code = {}
+    for row in reader:
+        if row['directors'] in directors_code.keys():
+            pass
+        else:
+            directors_code.update({row['directors']: row['movieNm']})
+
+directors = []
+print(len(directors_code))
+aaz = set(directors_code)
+aaz = list(aaz)
+print(len(aaz))
+
+for director_code in directors_code:
+
+    base_url ='http://www.kobis.or.kr/kobisopenapi/webservice/rest/people/searchPeopleList.json'
+    key = config('API_KEY')
+    peopleNm = director_code[0]
+    filmoNames = director_code[1]
+    api_url = f'{base_url}?key={key}&peopleNm={peopleNm}&filmoNames={filmoNames}'
+    
+
+
+    response = requests.get(api_url)
+    data = response.json()
+    print(data)
+    if data["peopleListResult"]["peopleList"] == []:
+        pass
+    else:
+
+        if data["peopleListResult"]["peopleList"][0]['repRoleNm'] == '감독':
+            temp = {
+                "peopleCd" : data["peopleListResult"]["peopleList"][0]['peopleCd'],
+                'peopleNm' : data["peopleListResult"]["peopleList"][0]['peopleNm'],
+                'repRoleNm' : data["peopleListResult"]["peopleList"][0]['repRoleNm'],
+                'filmoNames' : data["peopleListResult"]["peopleList"][0]['filmoNames'],
+            }
+            directors.append(temp)
+        else:
+            pass
+        
+        temp = {}
+
+print(directors) #top
+
+
+with open('director.csv', 'w', newline='', encoding='utf-8') as f:
+    # 저장할 필드의 이름을 미리 저장한다.
+    fieldnames = ("peopleCd",'peopleNm','repRoleNm','filmoNames' ) # 항목별 이름
+    writer = csv.DictWriter(f, fieldnames=fieldnames)
+
+    # 필드 이름을 csv 파일 최상단에 작성한다.
+    writer.writeheader() # 헤더를 생성한다.
+
+    # Dictionary를 순회하며 key값에 맞는 value를 한줄씩 작성한다.
+    for director in directors:
+        writer.writerow(director) # 어벤져스라는 딕셔너리 안에 
+~~~
+
+### 01.py code 상세정보
 
 ####  날짜변수 지정
 
@@ -132,6 +302,7 @@ print(data)
 - 목표는 2019년 7월 13일부터 최근 50주 간의 영화 상세정보를 받아와 boxoffice.csv파일을 생성하고movieCd, movieNm, audiAcc의 데이터만 받아오는 것 입니다.
 - 매 주마다의 정보가 필요하므로 datetime모듈의 timedelta메소드를 사용했습니다.
 - 부여받은 API는 환경변수 (.env)에 API_KEY라는 이름으로 변수를 지정하였고 decouple모듈의 config메소드를 사용하여 개인정보를 보호하였습니다.
+- .env 에 저장된 API_KEY값을 github에 올리지 않기 위해 .gitignore 파일을 생성하여 그 안에 .env를 지정합니다.
 - requests 메소드를 사용하여 받아온 데이터는 다음과 같은 형식입니다.
 
 #### 받아온 데이터의 형태
