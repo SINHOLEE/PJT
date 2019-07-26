@@ -70,7 +70,6 @@ API요청 코드
 
 **01.py 전체코드**
 
-
 ```python
 import requests
 from datetime import datetime, timedelta
@@ -275,7 +274,7 @@ with open('director.csv', 'w', newline='', encoding='utf-8') as f:
 
 ### 01.py code 상세정보
 
-####  날짜변수 지정
+#### 날짜변수 지정
 
 ```python
 import requests
@@ -461,4 +460,3 @@ with open('boxoffice.csv', 'w', newline='', encoding='utf-8') as f:
         writer.writerow(code) # 어벤져스라는 딕셔너리 안에 
 
 ```
-
